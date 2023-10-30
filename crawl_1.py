@@ -12,13 +12,12 @@ file_path = 'companys.txt'
 with open(file_path, 'r') as file:
     lines = file.readlines()
 
-# 检查并修正不足的情况，确保每个公司都有两行
 if len(lines) % 2 != 0:
     print("The 'companys.txt' file should contain pairs of company name and stock code.")
     exit(1)
 
-batch_size = 1000  # 每批处理的公司数量
-wait_time = random.uniform(5, 10)  # 随机等待时间
+batch_size = 1095
+wait_time = random.uniform(5, 10)
 
 for i in range(0, len(lines), batch_size):
     batch = lines[i:i + batch_size]
@@ -42,14 +41,14 @@ for i in range(0, len(lines), batch_size):
         download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
 
         select = Select(wait.until(EC.presence_of_element_located((By.ID, "selK_ChartPeriod"))))
-        select.select_by_value("365")  # 根据实际需要替换
+        select.select_by_value("365")  
 
         wait.until(EC.staleness_of(download_button))
 
         download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
         download_button.click()
 
-        retry = 3  # 最大重试次数
+        retry = 3  
         while retry > 0:
             if os.path.exists(os.path.join(download_folder, 'K_Chart.xls')):
                 break
