@@ -12,7 +12,7 @@ file_path = 'companys.txt'
 with open(file_path, 'r') as file:
     lines = file.readlines()
 
-batch_size = 5  # 每批处理的公司数量
+batch_size = 1000  
 wait_time = random.uniform(5, 10)  # 随机等待时间
 
 for i in range(0, len(lines), batch_size):
