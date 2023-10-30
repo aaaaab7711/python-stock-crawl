@@ -1,59 +1,60 @@
-#抓K線
 import os
 import time
+import random
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 
-
-file_path = 'companys.txt'  
-
+file_path = 'companys.txt'
 
 with open(file_path, 'r') as file:
-    lines = file.readlines()  
+    lines = file.readlines()
 
+# 检查并修正不足的情况，确保每个公司都有两行
+if len(lines) % 2 != 0:
+    print("The 'companys.txt' file should contain pairs of company name and stock code.")
+    exit(1)
 
-for i in range(0, len(lines), 2):
-    
-    line1 = lines[i].strip()
-    line2 = lines[i + 1].strip()
-    
-    download_folder = f'/Users/JinBin/Desktop/大學課程/大三上/機器學習/final_project/company_info/{line1}/K'  # 请将路径替换为实际文件夹路径
-    os.makedirs(download_folder,exist_ok=True)
-    
-    options = webdriver.ChromeOptions()
-    prefs = {'download.default_directory': download_folder}
-    options.add_experimental_option('prefs', prefs)
+batch_size = 1000  # 每批处理的公司数量
+wait_time = random.uniform(5, 10)  # 随机等待时间
 
-    
-    driver = webdriver.Chrome(options=options)
+for i in range(0, len(lines), batch_size):
+    batch = lines[i:i + batch_size]
 
-    
-    driver.get(f"https://goodinfo.tw/tw/ShowK_Chart.asp?STOCK_ID={line2}")
+    for j in range(0, len(batch), 2):
+        line1 = batch[j].strip()
+        line2 = batch[j + 1].strip()
 
-    
-    wait = WebDriverWait(driver, 10)  
-    download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
+        download_folder = f'/Users/JinBin/Desktop/大學課程/大三上/機器學習/final_project/company_info/{line1}/K'
+        os.makedirs(download_folder, exist_ok=True)
 
-    
-    select = Select(wait.until(EC.presence_of_element_located((By.ID, "selK_ChartPeriod"))))
+        options = webdriver.ChromeOptions()
+        prefs = {'download.default_directory': download_folder}
+        options.add_experimental_option('prefs', prefs)
 
-    
-    select.select_by_value("365")  # 请根据实际选项的值进行替换
+        driver = webdriver.Chrome(options=options)
 
-    
-    wait.until(EC.staleness_of(download_button))
+        driver.get(f"https://goodinfo.tw/tw/ShowK_Chart.asp?STOCK_ID={line2}")
 
+        wait = WebDriverWait(driver, 10)
+        download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
 
-    download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
+        select = Select(wait.until(EC.presence_of_element_located((By.ID, "selK_ChartPeriod"))))
+        select.select_by_value("365")  # 根据实际需要替换
 
+        wait.until(EC.staleness_of(download_button))
 
-    download_button.click()
+        download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
+        download_button.click()
 
-    while not os.path.exists(os.path.join(download_folder, 'K_Chart.xls')):
-        time.sleep(1)  
+        retry = 3  # 最大重试次数
+        while retry > 0:
+            if os.path.exists(os.path.join(download_folder, 'K_Chart.xls')):
+                break
+            time.sleep(1)
+            retry -= 1
 
-    driver.quit()
-    time.sleep(10)
+        driver.quit()
+        time.sleep(wait_time)

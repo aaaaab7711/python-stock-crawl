@@ -1,60 +1,52 @@
-#抓乖離率
 import os
 import time
+import random
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 
-
-file_path = 'companys.txt'  
-
+file_path = 'companys.txt'
 
 with open(file_path, 'r') as file:
-    lines = file.readlines()  
+    lines = file.readlines()
 
+batch_size = 5  # 每批处理的公司数量
+wait_time = random.uniform(5, 10)  # 随机等待时间
 
-for i in range(0, len(lines), 2):
-    
-    line1 = lines[i].strip()
-    line2 = lines[i + 1].strip()
-    
-    download_folder = f'/Users/JinBin/Desktop/大學課程/大三上/機器學習/final_project/company_info/{line1}/Bias'  # 请将路径替换为实际文件夹路径
-    os.makedirs(download_folder,exist_ok=True)
-    
-    options = webdriver.ChromeOptions()
-    prefs = {'download.default_directory': download_folder}
-    options.add_experimental_option('prefs', prefs)
+for i in range(0, len(lines), batch_size):
+    batch = lines[i:i + batch_size]
 
-    # 启动浏览器并应用设置
-    driver = webdriver.Chrome(options=options)
+    for j in range(0, len(batch), 2):
+        line1 = batch[j].strip()
+        line2 = batch[j + 1].strip()
 
-    
-    driver.get(f"https://goodinfo.tw/tw/ShowK_ChartFlow.asp?STOCK_ID={line2}")
+        download_folder = f'/Users/JinBin/Desktop/大學課程/大三上/機器學習/final_project/company_info/{line1}/Bias'
+        os.makedirs(download_folder, exist_ok=True)
 
-    wait = WebDriverWait(driver, 10)  # 最多等待10秒
-    download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
+        options = webdriver.ChromeOptions()
+        prefs = {'download.default_directory': download_folder}
+        options.add_experimental_option('prefs', prefs)
 
-    
-    select = Select(wait.until(EC.presence_of_element_located((By.ID, "selK_ChartFlowPeriod"))))
+        driver = webdriver.Chrome(options=options)
 
-    
-    select.select_by_value("3650")  
+        driver.get(f"https://goodinfo.tw/tw/ShowK_ChartFlow.asp?STOCK_ID={line2}")
 
-    
-    wait.until(EC.staleness_of(download_button))
+        wait = WebDriverWait(driver, 10)
+        download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
 
+        select = Select(wait.until(EC.presence_of_element_located((By.ID, "selK_ChartFlowPeriod"))))
+        select.select_by_value("3650")
 
-    download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
+        wait.until(EC.staleness_of(download_button))
 
+        download_button = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='匯出XLS']")))
+        download_button.click()
 
-    download_button.click()
+        while not os.path.exists(os.path.join(download_folder, 'K_ChartFlow.xls')):
+            time.sleep(1)
 
+        driver.quit()
 
-    while not os.path.exists(os.path.join(download_folder, 'K_ChartFlow.xls')):
-        time.sleep(1)  
-
-
-    driver.quit()
-    time.sleep(10)
+    time.sleep(wait_time)
